@@ -1,0 +1,46 @@
+services:
+  elasticsearch:
+    image: elastic/elasticsearch:8.17.0
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+    environment:
+      node.name: elasticsearch
+      discovery.type: single-node
+      xpack.security.enabled: false
+      ELASTIC_PASSWORD: "elastic123"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    restart: always
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: elastic/kibana:8.17.0
+    container_name: kibana
+    environment:
+      KIBANA_SYSTEM_PASSWORD: "kibana123"
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  logstash:
+    image: elastic/logstash:8.17.0
+    container_name: logstash
+    environment:
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+      LOGSTASH_INTERNAL_PASSWORD: "logstash123"
+    ports:
+      - 5044:5044
+      - 50000:50000/tcp
+      - 50000:50000/udp
+      - 9600:9600
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    restart: always
+
+volumes:
+  es-data:
